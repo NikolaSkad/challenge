@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useData } from '../state/DataContext';
 import { Link } from 'react-router-dom';
 import { FixedSizeList as List } from 'react-window';
+import { useDebounce } from '../hooks/useDebounce';
 
 function Items() {
   const { items, total, fetchItems } = useData();
@@ -10,17 +11,19 @@ function Items() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const debouncedSearch = useDebounce(search, 300);
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    fetchItems(controller.signal, page, search)
+    fetchItems(controller.signal, page, debouncedSearch)
       .catch((err) => {
         if (err.name !== 'AbortError') setError('Failed to load items.');
       })
       .finally(() => setLoading(false));
     return () => controller.abort();
-  }, [fetchItems, page, search]);
+  }, [fetchItems, page, debouncedSearch]);
 
   const totalPages = Math.ceil(total / 10);
 
